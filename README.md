@@ -59,36 +59,30 @@ class Home extends ConsumerWidget{
 ## Provider
 
 ### 各种各样的Provider
-#### Provider
-它只提供只读的数据
-（只读的意思是，使用者不能在外部通过read直接修改数据）
-使用场景：数据类型A只能根据若干可观察对象计算生成
-例子：如果需要持续观察三个人的最高得分（有三个ProviderBase提供了三个人的得分）可以建立一个Provider来观察这三个人的得分，对外提供最大值。
-#### StateProvider
-对外提供可读可写的数据
-使用场景：数据类型A可以被任意方式赋值
-例子：由于对修改不存在限制，那么很可能会由于不安全的操作导致异常，比如null指针，所以除非是可以确保修改者的操作一定是安全的或简单的（比如counter demo），否则都不建议使用此类。
-#### StateNotifierProvider
-提供可读的StateNotifier，这是一种在提供者中确保数据安全的类
-使用场景：数据类型A可以被外部修改，但修改方式是有限的
-例子：
-#### ChangeNotifierProvider
-提供可读的ChangeNotifier
-使用场景：有一组数据可以被外部修改，但修改方式是有限的
-例子：MVVM中的VM
-#### FutureProvider
-提供只读的数据，loading，error状态
-使用场景：观察产生一个结果的异步操作的过程和结果
-例子：数据A获取过程中，显示一个loading状态
 
-#### StreamProvider
-提供只读的数据，loading，error状态
-使用场景：观察产生若干结果的异步操作的过程和结果
-例子：获取若干数据类型A，并在获取到第一个之前显示一个loading状态
-#### ScopedProvider
-提供以特殊方式可写的数据
-使用场景：如果一个提供者，在树中若干位置可用，且他们需要特殊的值在他们所在子树中生效
-例子：它可以以注入的方式给list的item注入数据，而避免写构造函数，官方的例子非常棒！
+具体可以看这里，https://pub.dev/documentation/flutter_riverpod/latest/flutter_riverpod/flutter_riverpod-library.html
+
+下面列举了一些常用的Provider类型
+
+* Provider
+
+  https://pub.dev/documentation/riverpod/latest/riverpod/Provider-class.html
+
+
+* StateProvider
+
+https://pub.dev/documentation/riverpod/latest/riverpod/StateProvider-class.html
+
+* StateNotifierProvider
+  https://pub.dev/documentation/riverpod/latest/riverpod/StateNotifierProvider-class.html
+
+* FutureProvider
+  https://pub.dev/documentation/riverpod/latest/riverpod/FutureProvider-class.html
+
+* StreamProvider
+  https://pub.dev/documentation/riverpod/latest/riverpod/StreamProvider-class.html
+
+  
 
 ### Provider的修饰符
 #### .family
