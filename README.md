@@ -1,6 +1,6 @@
 # riverpod_demo
 
-### 引入riverpod
+## 引入riverpod
 demo中没有包含flutter_hook,所以我们选择引入flutter_riverpod即可
 ``` yaml
 environment:
@@ -13,7 +13,7 @@ dependencies:
   flutter_riverpod: ^1.0.3
 ```
 
-### hello world
+## hello world
 首先，我们需要使用`ProviderScope`来包裹整个应用，也就是在main方法中
 ``` dart
 void main() {
@@ -56,42 +56,44 @@ class Home extends ConsumerWidget{
 }
 ```
 
-### Provider
+## Provider
 
-#### 各种各样的Provider
-##### Provider
+### 各种各样的Provider
+#### Provider
 它只提供只读的数据
 （只读的意思是，使用者不能在外部通过read直接修改数据）
 使用场景：数据类型A只能根据若干可观察对象计算生成
 例子：如果需要持续观察三个人的最高得分（有三个ProviderBase提供了三个人的得分）可以建立一个Provider来观察这三个人的得分，对外提供最大值。
-##### StateProvider
+#### StateProvider
 对外提供可读可写的数据
 使用场景：数据类型A可以被任意方式赋值
 例子：由于对修改不存在限制，那么很可能会由于不安全的操作导致异常，比如null指针，所以除非是可以确保修改者的操作一定是安全的或简单的（比如counter demo），否则都不建议使用此类。
-##### StateNotifierProvider
+#### StateNotifierProvider
 提供可读的StateNotifier，这是一种在提供者中确保数据安全的类
 使用场景：数据类型A可以被外部修改，但修改方式是有限的
 例子：
-##### ChangeNotifierProvider
+#### ChangeNotifierProvider
 提供可读的ChangeNotifier
 使用场景：有一组数据可以被外部修改，但修改方式是有限的
 例子：MVVM中的VM
-##### FutureProvider
+#### FutureProvider
 提供只读的数据，loading，error状态
 使用场景：观察产生一个结果的异步操作的过程和结果
 例子：数据A获取过程中，显示一个loading状态
 
-##### StreamProvider
+#### StreamProvider
 提供只读的数据，loading，error状态
 使用场景：观察产生若干结果的异步操作的过程和结果
 例子：获取若干数据类型A，并在获取到第一个之前显示一个loading状态
-##### ScopedProvider
+#### ScopedProvider
 提供以特殊方式可写的数据
 使用场景：如果一个提供者，在树中若干位置可用，且他们需要特殊的值在他们所在子树中生效
 例子：它可以以注入的方式给list的item注入数据，而避免写构造函数，官方的例子非常棒！
 
-#### Provider的修饰符
-##### .family
+### Provider的修饰符
+#### .family
+
+##### 使用
 
 该修饰符适用于适用外部数据来构建provider的情况
 
@@ -129,17 +131,105 @@ Widget build(BuildContext context, WidgetRef ref) {
 }
 ```
 
+##### 参数限制
+
+参数不限制类型，但必须实现`==`和`hashCode`两个方法；
+
+如果参数不是constant的，比如我们想将输入框内容传给Provider，但是输入框的内容会变化的特别频繁并且不能复用，这种情况可能会导致内存泄露，可以使用`.autoDispose`修饰符来修复这个问题
+
+``` dart
+final characters = FutureProvider.autoDispose.family<List<Character>, String>((ref, filter) async {
+  return fetchCharacters(filter: filter);
+});
+```
+
+##### 传递多个参数
+
+.family修饰符并没有内置提供过个参数的方法，另外一方面，这个参数可以是任意符合上面提到的限制的类型。
+比如
+
+* 元组
+* 使用 Freezed 或 built_value 生成的对象
+* 使用 equatable 的对象
+
+
+
+** freezed **
+
+``` dart
+@freezed
+abstract class MyParameter with _$MyParameter {
+  factory MyParameter({
+    required int userId,
+    required Locale locale,
+  }) = _MyParameter;
+}
+
+final exampleProvider = Provider.autoDispose.family<Something, MyParameter>((ref, myParameter) {
+  print(myParameter.userId);
+  print(myParameter.locale);
+  // Do something with userId/locale
+});
+
+@override
+Widget build(BuildContext context, WidgetRef ref) {
+  int userId; // Read the user ID from somewhere
+  final locale = Localizations.localeOf(context);
+
+  final something = ref.watch(
+    exampleProvider(MyParameter(userId: userId, locale: locale)),
+  );
+
+  ...
+}
+```
+
+**Equatable**
+
+``` dart
+class MyParameter extends Equatable  {
+  MyParameter({
+    required this.userId,
+    required this.locale,
+  });
+
+  final int userId;
+  final Locale locale;
+
+  @override
+  List<Object> get props => [userId, locale];
+}
+
+final exampleProvider = Provider.family<Something, MyParameter>((ref, myParameter) {
+  print(myParameter.userId);
+  print(myParameter.locale);
+  // Do something with userId/locale
+});
+
+@override
+Widget build(BuildContext context, WidgetRef ref) {
+  int userId; // Read the user ID from somewhere
+  final locale = Localizations.localeOf(context);
+
+  final something = ref.watch(
+    exampleProvider(MyParameter(userId: userId, locale: locale)),
+  );
+
+  ...
+}
+```
 
 
 
 
-##### .autoDispose
 
-### WidgetRef
+#### .autoDispose
 
-#### 获取WidgetRef对象
+## WidgetRef
 
-##### 从其他Provider对象中获取
+### 获取WidgetRef对象
+
+#### 从其他Provider对象中获取
 
 ``` dart
 final provider = Provider((ref) {
@@ -171,7 +261,7 @@ class Counter extends StateNotifier<int> {
 
 这么做可以让Counter内部读取provider状态
 
-##### 从Widget对象中获取ref
+#### 从Widget对象中获取ref
 
 一般情况下Widget对象中是没有ref对象中，但riverpod提供了几种解决方案
 
@@ -242,7 +332,7 @@ class HomeView extends HookConsumerWidget {
 
 
 
-#### WidgetRef对象的方法
+### WidgetRef对象的方法
 
 
 这里的`WidgetRef`对象在读取Provider中的数据时，提供了`read`、`listen`和`watch`方法。至于什么情况下选用哪个方法，这里有三个建议
@@ -337,7 +427,7 @@ class HomeView extends ConsumerWidget {
 }
 ```
 
-#### 决定订阅什么
+### 决定订阅什么
 
 比如我们有一个StreamProvider
 
@@ -377,7 +467,7 @@ Widget build(BuildContext context, WidgetRef ref) {
 }
 ```
 
-#### 使用"select" 来决定哪些值变化时进行重建
+### 使用"select" 来决定哪些值变化时进行重建
 
 比如我们有一个User对象
 
