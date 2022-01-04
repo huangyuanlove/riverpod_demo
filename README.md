@@ -219,6 +219,110 @@ Widget build(BuildContext context, WidgetRef ref) {
 
 #### .autoDispose
 
+一个通用场景是能够自动释放长时间不适用Provider；
+
+有很多个让我们这么做得理由，比如：
+
+* 在使用Firebase时，关闭连接避免不必要的开销
+* 当用户离开页面再进入页面时重置状态
+
+我们可以使用内嵌的`.autoDispose`修饰符来支持上述场景
+
+#####  使用
+
+想要告诉Riverpod在不再使用provider时将其销毁，只需要在Provider之前加上`.autoDispose`即可
+
+``` dart
+final userProvider = StreamProvider.autoDispose<User>((ref) {
+
+});
+```
+
+就这样，当`userProvider`不再使用时将会被自动销毁
+
+注意通用参数是如何在autoDispose之后而不是之前传递的--autoDispose不是一个命名的构造函数。
+
+当然，上面也提到可以和其他修饰符一起
+
+``` dart
+final userProvider = StreamProvider.autoDispose.family<User, String>((ref, id) {
+
+});
+```
+
+##### ref.maintainState
+
+用`autoDispose`标记一个提供者，也会在ref上增加一个额外的属性： `maintainState`。
+
+该属性是一个布尔值（默认为false），允许提供者告诉Riverpod即使不再被监听，是否应该保留提供者的状态。
+
+一个用例是在一个HTTP请求完成后，将这个标志设置为true:
+
+``` dart
+final myProvider = FutureProvider.autoDispose((ref) async {
+  final response = await dio.get(...);
+  ref.maintainState = true;
+  return response;
+});
+```
+
+这样，如果请求失败，用户离开屏幕后又重新进入，那么请求将被再次执行。但如果请求成功完成，状态将被保留，重新进入屏幕将不会触发新的请求。
+
+##### 示例：取消http请求
+
+autoDispose修改器可以与FutureProvider和ref.onDispose相结合，以便在不再需要HTTP请求时轻松取消。
+
+要求：
+
+* 当用户进入一个屏幕时，启动一个HTTP请求
+* 如果用户在请求完成前离开屏幕，则取消HTTP请求
+* 如果请求成功，离开并重新进入屏幕不会启动一个新的请求
+
+``` dart
+final myProvider = FutureProvider.autoDispose((ref) async {
+  // An object from package:dio that allows cancelling http requests
+  final cancelToken = CancelToken();
+  // When the provider is destroyed, cancel the http request
+  ref.onDispose(() => cancelToken.cancel());
+
+  // Fetch our data and pass our `cancelToken` for cancellation to work
+  final response = await dio.get('path', cancelToken: cancelToken);
+  // If the request completed successfully, keep the state
+  ref.maintainState = true;
+  return response;
+});
+```
+
+##### 参数类型'AutoDisposeProvider'不能分配给参数类型'AlwaysAliveProviderBase'。
+
+当使用.autoDispose时，你可能会发现自己的应用程序无法编译，出现类似的错误。
+
+> The argument type 'AutoDisposeProvider' can't be assigned to the parameter type 'AlwaysAliveProviderBase'
+
+可能是因为你试图在一个没有标记为.autoDispose的提供者中监听一个标记为.autoDispose的提供者，例如：
+
+``` dart
+final firstProvider = Provider.autoDispose((ref) => 0);
+
+final secondProvider = Provider((ref) {
+  // The argument type 'AutoDisposeProvider<int>' can't be assigned to the
+  // parameter type 'AlwaysAliveProviderBase<Object, Null>'
+  ref.watch(firstProvider);
+});
+```
+
+这是不可取的，因为它将导致firstProvider永远不会被dispose。我们可以考虑将 `secondProvider` 标记为 `.autoDispose来修复这个问题：
+
+``` dart
+final firstProvider = Provider.autoDispose((ref) => 0);
+
+final secondProvider = Provider.autoDispose((ref) {
+  ref.watch(firstProvider);
+});
+```
+
+
+
 ## WidgetRef
 
 ### 获取WidgetRef对象

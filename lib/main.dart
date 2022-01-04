@@ -3,13 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 final helloWorldProvider  = Provider((_)=>"hello world");
-final counterProvider = StateProvider((_)=> 0);
-
-
-
-void main() {
-  runApp(const ProviderScope(child: Home()));
-}
+final counterProvider = StateProvider((_)
 
 class Home extends ConsumerWidget{
   const Home({Key? key}) : super(key: key);
